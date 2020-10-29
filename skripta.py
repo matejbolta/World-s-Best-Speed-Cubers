@@ -3,8 +3,10 @@
 # wca ranki:
 # - rank
 # - ime
-# - leto
+# - rezultat
 # - narodnost
+# - tekmovanje
+# - leto
 #
 # tekmovalec:
 # - spol
@@ -15,7 +17,8 @@
 # - število tekmovalcev
 # ---------------------------------------------
 #
-# multi - wca ranki:
+# multi::
+# wca ranki:
 # - isto
 #
 # tekmovalec:
@@ -137,12 +140,24 @@ def block_to_main_dict(block):
 def block_to_competitor_dict(block):
     '''Pridobi spletno stran tekmovalca (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovalcu'''
+    # Htmljev ne shranjuje na disk, ker bi jih bilo skupno preko 30'000
+    pattern_url = re.compile(
+        r'<a href="/(?P<url>persons/.*?)">'
+    )
+    addition = re.search(pattern_url, block).group('url')
+    content = url_to_content(url_wca + addition)
+    pattern_comp = re.compile(
+        r'WCA ID.*?</td>.*?<td>'
+        r'(?P<wca_id>.*?)'
+        r'</td>.*?<td>'
+        r'(?P<gender>.*?)'
+        r'</td>.*?<td>'
+        r'(?P<attended_competitions>.*?)'
+        r'</td>',
+        flags=re.DOTALL
+    )
+    return re.search(pattern_comp, content).groupdict()
 
-    # ----------------
-    # ----- TODO -----
-    # ----------------
-    
-    pass
 
 def block_to_competition_dict(block):
     '''Pridobi spletno stran tekmovanja (je ne shrani),
@@ -151,11 +166,11 @@ def block_to_competition_dict(block):
     pattern_url = re.compile(
         r'<a href="/(?P<url>competitions/.*?)">'
     )
-    addition = re.search(pattern_url, block).groupdict()['url']
+    addition = re.search(pattern_url, block).group('url')
     content = url_to_content(url_wca + addition)
     pattern_comp = re.compile(
         r'Competitors</dt>\n\s*?<dd>'
-        r'(?P<competitors>\d+)'
+        r'(?P<competition_size>\d+)'
         r'</dd>'
     )
     return re.search(pattern_comp, content).groupdict()
@@ -168,6 +183,8 @@ blok1 = '''
         <td class="competition"> <span class=" flag-icon flag-icon-us"></span> <a href="/competitions/FlagCityFall2019">Flag City Fall 2019</a> </td>
           <td class="solve 0">6.25</td><td class="solve 1 trimmed worst">6.82</td><td class="solve 2 trimmed best">6.21</td><td class="solve 3">6.39</td><td class="solve 4">6.24</td>
 '''
+
+print(block_to_competitor_dict(blok1))
 # block_to_competition_dict(blok1)
 
 
