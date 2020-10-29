@@ -13,7 +13,7 @@ Zajel bom najboljših 10000 3x3 razvrstitev, in sicer za vsako:
 * število tekmovalcev s strani tekmovanja
 * wca id, ter s tem leto prvega tekmovanja
 
-Zajel bom tudi prvih 1000 razvrstitev v disciplinah 4x4x4 Blindfolded ter 3x3x3 Multi-Blind. Podobno kot prej bom zajel rank, ime, državo, leto tekmovanja ter prvo tekmovalčevo leto. Poleg tega bom za vsakega tekmovalca zajel tudi njegov rank ter povprečje v klasični 3x3x3 disciplini, ter število njegovih tekmovanj iz njegove osebne strani.
+Zajel bom tudi prvih 2000 razvrstitev v disciplini 3x3x3 Multi-Blind. Podobno kot prej bom zajel rank, ime, državo, leto tekmovanja ter prvo tekmovalčevo leto. Poleg tega bom za vsakega tekmovalca zajel tudi njegov rank ter povprečje v klasični 3x3x3 disciplini, ter število njegovih tekmovanj in spol iz njegove osebne strani.
 
 Moje delovne hipoteze:
 * Katere države so najboljše v klasični 3x3x3 disciplini?
@@ -22,7 +22,7 @@ Moje delovne hipoteze:
 * Kakšna je slovenska zasedba v svetovnem merilu?
 * Vpliv spola na rankiranje?
 * Vpliv velikosti tekmovanja na rankiranje?
-* ---
+---
 * Kako 3x3x3 rezultat vpliva na ostale discipline (konkretno 4x4x4 Blindfolded ter 3x3x3 Multi-Blind)?
 
 TODO
