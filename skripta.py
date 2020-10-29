@@ -42,20 +42,14 @@ import os
 import re
 import requests
 
+
 # Konstante
 url_wca = 'https://www.worldcubeassociation.org/'
 url_rankings_333 = url_wca + f'results/rankings/333/average?show={10000}+persons'
-path_html_333 = 'htmls/'
+path_html = 'htmls/'
 name_html_333 = 'frontpage-333.html'
-path_competitors_333 = os.path.join(path_html_333, 'competitors')
 # name_csv_TODO = 'TODO.csv'
 
-# html_folder
-#     'frontpage-333.html'
-#     competitors
-#         'competitor-{id}.html'
-#     competitions
-#         'competition-{name}.html'
 
 def url_to_content(url):
     '''Sprejme url (niz), ter vrne vsebino pod tem url-jem kot niz'''
@@ -110,9 +104,6 @@ def content_to_blocks(content):
     return list_of_blocks
 
 
-#--------------
-
-
 def block_to_main_dict(block):
     '''Vrne slovar ki vsebuje (skoraj) vse željene podatke'''
     pattern = re.compile(
@@ -134,13 +125,11 @@ def block_to_main_dict(block):
     # print(block, '\n\n', main_dict)
     return main_dict
 
-# Spodnja vrstica dobi slovar iz bloka:
-# print(block_to_main_dict(content_to_blocks(file_to_content(path_html_333, name_html_333))[5449]))
 
 def block_to_competitor_dict(block):
     '''Pridobi spletno stran tekmovalca (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovalcu'''
-    # Htmljev ne shranjuje na disk, ker bi jih bilo skupno preko 30'000
+    # Htmljev ne shranjuje na disk, ker bi jih bilo skupno 2 * 10'000
     pattern_url = re.compile(
         r'<a href="/(?P<url>persons/.*?)">'
     )
@@ -162,7 +151,7 @@ def block_to_competitor_dict(block):
 def block_to_competition_dict(block):
     '''Pridobi spletno stran tekmovanja (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovanju'''
-    # Htmljev ne shranjuje na disk, ker bi jih bilo skupno preko 30'000
+    # Htmljev ne shranjuje na disk, ker bi jih bilo skupno 2 * 10'000
     pattern_url = re.compile(
         r'<a href="/(?P<url>competitions/.*?)">'
     )
@@ -175,27 +164,24 @@ def block_to_competition_dict(block):
     )
     return re.search(pattern_comp, content).groupdict()
 
-blok1 = '''
-        <td class="pos "> 9 </td>
-        <td class="name"> <a href="/persons/2010BRAD01">Drew Brads</a> </td>
-        <td class="result"> 6.29 </td>
-        <td class="country"> <span class=" flag-icon flag-icon-us"></span> United States </td>
-        <td class="competition"> <span class=" flag-icon flag-icon-us"></span> <a href="/competitions/FlagCityFall2019">Flag City Fall 2019</a> </td>
-          <td class="solve 0">6.25</td><td class="solve 1 trimmed worst">6.82</td><td class="solve 2 trimmed best">6.21</td><td class="solve 3">6.39</td><td class="solve 4">6.24</td>
-'''
-
-print(block_to_competitor_dict(blok1))
-# block_to_competition_dict(blok1)
-
-
 
 def block_to_unified_dict(block):
     '''Vrne skupen slovar vseh podatkov iz bloka'''
     main_dict = block_to_main_dict(block)
     competitor_dict = block_to_competitor_dict(block)
     competition_dict = block_to_competition_dict(block)
-    unified_dict = main_dict.update(competitor_dict).update(competition_dict)
-    return unified_dict
+
+    main_dict.update(competitor_dict)
+    main_dict.update(competition_dict)
+
+    return main_dict
+
+
+# drew_block = content_to_blocks(file_to_content(path_html, name_html_333))[8]
+# print(block_to_main_dict(drew_block))    # [5449] --> Matej
+# print(block_to_competitor_dict(drew_block))
+# print(block_to_competition_dict(drew_block))
+# print(block_to_unified_dict(drew_block))
 
 
 def file_to_dict_list(directory, filename):
@@ -231,17 +217,11 @@ def file_to_dict_list(directory, filename):
 
 
 
-
-
-
-
-
-
 def main(redownload=True):
     if redownload:
         # Na disk shrani html z 3x3x3 vsebino
         # Podatki zajeti dne: 2020-10-28
-        # url_to_disk(url_rankings_333, path_html_333, name_html_333)
+        # url_to_disk(url_rankings_333, path_html, name_html_333)
         pass
     return None
 
