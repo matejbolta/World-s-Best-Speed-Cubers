@@ -38,7 +38,9 @@
 #         write csv
 #-------------------------------------------------
 
-import datetime
+import csv
+# import datetime
+import json
 import os
 import re
 import requests
@@ -46,10 +48,14 @@ import requests
 
 # Konstante
 url_wca = 'https://www.worldcubeassociation.org/'
-url_rankings_333 = url_wca + f'results/rankings/333/average?show={10000}+persons'
-path_html = 'htmls/'
-name_html_333 = 'frontpage-333.html'
-# name_csv_TODO = 'TODO.csv'
+url_333 = url_wca + f'results/rankings/333/average?show={10000}+persons'
+data_path = 'data/'
+name_html_333 = '333.html'
+name_json_333 = '333.json'
+name_csv_333 = '333.csv'
+# name_html_multi = 
+# name_json_multi = 
+# name_csv_multi = 
 
 
 # --------------------------------------------------
@@ -184,18 +190,19 @@ def block_to_competition_dict(block):
 # Subsidiary to file_to_dict_list()
 def block_to_unified_dict(block):
     '''Vrne skupen slovar vseh podatkov iz bloka'''
-    main_dict = block_to_main_dict(block)
-    competitor_dict = block_to_competitor_dict(block)
-    competition_dict = block_to_competition_dict(block)
+    return block_to_main_dict(block)
+    # main_dict = block_to_main_dict(block)
+    # competitor_dict = block_to_competitor_dict(block)
+    # competition_dict = block_to_competition_dict(block)
 
-    main_dict.update(competitor_dict)
-    main_dict.update(competition_dict)
+    # main_dict.update(competitor_dict)
+    # main_dict.update(competition_dict)
 
-    return main_dict
+    # return main_dict
 
 
 # Test za en blok:
-# drew_block = content_to_blocks(file_to_content(path_html, name_html_333))[8]
+# drew_block = content_to_blocks(file_to_content(data_path, name_html_333))[8]
 # [5449] --> Matej
 # print(block_to_unified_dict(drew_block))
 
@@ -226,48 +233,61 @@ def file_to_dict_list(directory, filename):
 # Shranjevanje csv datoteke z vsemi podatki
 # --------------------------------------------------
 
-# Subsidiary to dicts_to_csv()
-def neki_kar_zapisuje_vrstice_v_csv_al_kako_ze(x):
-    pass
+def obj_to_json(obj, directory, filename):
+    '''Zapiše objekt na podano pot v json datoteko'''
+    os.makedirs(directory, exist_ok=True)
+    path = os.path.join(directory, filename)
+    with open(path, 'w', encoding='utf-8') as json_file:
+        json.dump(obj, json_file, indent=2, ensure_ascii=False)
 
 
+# Subsidiary to json_to_csv()
+def json_to_obj(directory, filename):
+    '''Vrne vsebino json datoteke pod podano potjo'''
+    path = os.path.join(directory, filename)
+    with open(path, 'r', encoding='utf-8') as json_file:
+        obj = json.load(json_file)
+    return obj
+
+
+# Subsidiary to json_to_csv()
 def dicts_to_csv(dicts, directory, filename):
-    
-    
-    
-    
-    pass
+    '''Zapiše seznam slovarjev na podano pot v csv datoteko'''
+    path = os.path.join(directory, filename)
+    fieldnames = dicts[0].keys()
+    with open(path, 'w', encoding='utf-8') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for dictionary in dicts:
+            writer.writerow(dictionary)
+    return None
 
 
-# TODO najprej naredi funkcijo ki ti bo sez slovarjev zapisala v json,
-# TODO da bo lokalno shranjeno. in jo implementiraj.
+def json_to_csv(dir_json, filename_json, dir_csv, filename_csv):
+    '''Iz json datoteke na podani poti, zapiše pripadajočo csv datoteko'''
+    dicts = json_to_obj(dir_json, filename_json)
+    dicts_to_csv(dicts, dir_csv, filename_csv)
+    return None
 
 
+# --------------------------------------------------
+# Glavna funkcija
+# --------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-def main(main_data=False, additional_data=False):
-    '''
-    '''
-    if main_data:
+def main(redownload=False, reparse=False):
+    '''Pridobi ter z vmesnimi koraki zapiše željene podatke v csv datoteko'''
+    if redownload:
         # Na disk shrani html z 333 ranki
         # Stran zajeta dne: 2020-10-28
-        url_to_disk(url_rankings_333, path_html, name_html_333)
+        url_to_disk(url_333, data_path, name_html_333)
     
-    if additional_data:
-        # Pridobi podatke iz datoteke in dodatne podatke s spleta
-        # Dodatnih datotek ne shrani na disk, in teče zelo dolgo
-        dicts = file_to_dict_list(path_html, name_html_333)
+    if reparse:
+        # Pridobi podatke iz html datoteke in dodatne podatke s spleta
+        # Dodatnih html datotek ne shrani na disk, in teče zelo dolgo
+        # Podatke zapiše v json in v csv datoteko
+        dicts = file_to_dict_list(data_path, name_html_333)
+        obj_to_json(dicts, data_path, name_json_333)
+        json_to_csv(data_path, name_json_333, data_path, name_csv_333)
 
 
 # Da se main() ne požene ob, denimo, importu
