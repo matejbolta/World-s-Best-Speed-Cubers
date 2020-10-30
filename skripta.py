@@ -38,6 +38,7 @@
 #         write csv
 #-------------------------------------------------
 
+import datetime
 import os
 import re
 import requests
@@ -51,6 +52,11 @@ name_html_333 = 'frontpage-333.html'
 # name_csv_TODO = 'TODO.csv'
 
 
+# --------------------------------------------------
+# Shranjevanje html datoteke na disk
+# --------------------------------------------------
+
+# Subsidiary to url_to_disk()
 def url_to_content(url):
     '''Sprejme url (niz), ter vrne vsebino pod tem url-jem kot niz'''
     try:
@@ -66,6 +72,7 @@ def url_to_content(url):
         return None
 
 
+# Subsidiary to url_to_disk()
 def content_to_disk(content, directory, filename):
     '''Zapiše vsebino strani na disk pod directory/filename'''
     os.makedirs(directory, exist_ok=True)
@@ -73,7 +80,7 @@ def content_to_disk(content, directory, filename):
     with open(path, 'w', encoding='utf-8') as file_out:
         file_out.write(content)
     return None
-    
+
 
 def url_to_disk(url, directory, filename):
     '''Shrani vsebino strani na povezavi url na disk pod directory/filename'''
@@ -85,6 +92,11 @@ def url_to_disk(url, directory, filename):
         return False
 
 
+# --------------------------------------------------
+# Pridobivanje seznama slovarjev z vsemi podatki
+# --------------------------------------------------
+
+# Subsidiary to file_to_dict_list()
 def file_to_content(directory, filename):
     '''Vrne vsebino datoteke na directory/filename'''
     path = os.path.join(directory, filename)
@@ -92,6 +104,7 @@ def file_to_content(directory, filename):
         return in_file.read()
 
 
+# Subsidiary to file_to_dict_list()
 def content_to_blocks(content):
     '''Poišče posamezne ranke in vrne seznam teh rankov'''
     pattern = re.compile(
@@ -104,6 +117,7 @@ def content_to_blocks(content):
     return list_of_blocks
 
 
+# Subsidiary to block_to_unified_dict()
 def block_to_main_dict(block):
     '''Vrne slovar ki vsebuje (skoraj) vse željene podatke'''
     pattern = re.compile(
@@ -126,6 +140,7 @@ def block_to_main_dict(block):
     return main_dict
 
 
+# Subsidiary to block_to_unified_dict()
 def block_to_competitor_dict(block):
     '''Pridobi spletno stran tekmovalca (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovalcu'''
@@ -148,6 +163,7 @@ def block_to_competitor_dict(block):
     return re.search(pattern_comp, content).groupdict()
 
 
+# Subsidiary to block_to_unified_dict()
 def block_to_competition_dict(block):
     '''Pridobi spletno stran tekmovanja (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovanju'''
@@ -165,6 +181,7 @@ def block_to_competition_dict(block):
     return re.search(pattern_comp, content).groupdict()
 
 
+# Subsidiary to file_to_dict_list()
 def block_to_unified_dict(block):
     '''Vrne skupen slovar vseh podatkov iz bloka'''
     main_dict = block_to_main_dict(block)
@@ -177,10 +194,9 @@ def block_to_unified_dict(block):
     return main_dict
 
 
+# Test za en blok:
 # drew_block = content_to_blocks(file_to_content(path_html, name_html_333))[8]
-# print(block_to_main_dict(drew_block))    # [5449] --> Matej
-# print(block_to_competitor_dict(drew_block))
-# print(block_to_competition_dict(drew_block))
+# [5449] --> Matej
 # print(block_to_unified_dict(drew_block))
 
 
@@ -189,11 +205,42 @@ def file_to_dict_list(directory, filename):
     content = file_to_content(directory, filename)
     blocks = content_to_blocks(content)
 
+    # To naj bi teklo med 8 (3s na blok) in 11 (4s na blok) ur,
+    # če me wca vmes ne bana. Vmes bi bilo opravljenih 20 000
+    # requests.get() poizvedb, ena na 1,5 oz 2 sekundi.
+
+    # Tole naredi enako, plus, vmes kaže napredek:
+    # sez = list()
+    # print('Začetek:', datetime.datetime.now())
+    # for i, block in enumerate(blocks):
+    #     sez.append(block_to_unified_dict(block))
+    #     if not i % 10:
+    #         print(f'napredek: {(i + 1) / 100}%')
+    # return sez
     return [
         block_to_unified_dict(block) for block in blocks
     ]
 
 
+# --------------------------------------------------
+# Shranjevanje csv datoteke z vsemi podatki
+# --------------------------------------------------
+
+# Subsidiary to dicts_to_csv()
+def neki_kar_zapisuje_vrstice_v_csv_al_kako_ze(x):
+    pass
+
+
+def dicts_to_csv(dicts, directory, filename):
+    
+    
+    
+    
+    pass
+
+
+# TODO najprej naredi funkcijo ki ti bo sez slovarjev zapisala v json,
+# TODO da bo lokalno shranjeno. in jo implementiraj.
 
 
 
@@ -209,21 +256,18 @@ def file_to_dict_list(directory, filename):
 
 
 
-
-
-
-
-
-
-
-
-def main(redownload=True):
-    if redownload:
-        # Na disk shrani html z 3x3x3 vsebino
-        # Podatki zajeti dne: 2020-10-28
-        # url_to_disk(url_rankings_333, path_html, name_html_333)
-        pass
-    return None
+def main(main_data=False, additional_data=False):
+    '''
+    '''
+    if main_data:
+        # Na disk shrani html z 333 ranki
+        # Stran zajeta dne: 2020-10-28
+        url_to_disk(url_rankings_333, path_html, name_html_333)
+    
+    if additional_data:
+        # Pridobi podatke iz datoteke in dodatne podatke s spleta
+        # Dodatnih datotek ne shrani na disk, in teče zelo dolgo
+        dicts = file_to_dict_list(path_html, name_html_333)
 
 
 # Da se main() ne požene ob, denimo, importu
