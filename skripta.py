@@ -1,15 +1,19 @@
-# POBIRAM:
-#   Mutliple Blindfolded (multi):
-#     Wca ranki:
-#       - rank
-#       - ime
-#       - rezultat
-#       - narodnost
-#       - tekmovanje
-#       - leto
-#     Tekmovalec:
-#       - 3x3x3 avg + rank wr
-#       - spol, id, št tekmovanj
+# Script structure:
+# main(...)
+#     url_to_disk(...) ok
+#         url_to_content(...) ok
+#         content_to_disk(...) ok
+#     file_to_dict_list(...) ok
+#         file_to_content(...) ok
+#         content_to_blocks(...) ok
+#         block_to_unified_dict(...)
+#             block_to_main_dict(...)
+#             block_to_competitor_dict(...)
+#             block_to_competition_dict(...)
+#     obj_to_json(...)
+#     json_to_csv(...)
+#         json_to_obj(...)
+#         dicts_to_csv(...)
 
 import csv
 import datetime
@@ -19,24 +23,26 @@ import re
 import requests
 import time
 
+# 3x3x3 bo vedno označeno kot 333, Multiple Blindfolded pa kot multi
 
 # Konstante
-url_wca = 'https://www.worldcubeassociation.org/'
-url_333 = url_wca + f'results/rankings/333/average?show={10000}+persons'
 data_path = 'data/'
 name_html_333 = '333.html'
 name_json_333 = '333.json'
 name_csv_333 = '333.csv'
-# name_html_multi = 
-# name_json_multi = 
-# name_csv_multi = 
+name_html_multi = 'multi.html'
+name_json_multi = 'multi.json'
+name_csv_multi = 'multi.csv'
+url_wca = 'https://www.worldcubeassociation.org/'
+url_333 = url_wca + f'results/rankings/333/average?show={10000}+persons'
+url_multi = url_wca + f'results/rankings/333mbf/single?show={2000}+persons'
 
 
 # --------------------------------------------------
 # Shranjevanje html datoteke na disk
 # --------------------------------------------------
 
-# Subsidiary to url_to_disk() and others
+# Subsidiary to url_to_disk()
 def url_to_content(url):
     '''Sprejme url (niz), ter vrne vsebino pod tem url-jem kot niz'''
     # Filter za nestabilno internetno povezavo
@@ -91,6 +97,8 @@ def url_to_disk(url, directory, filename):
 # --------------------------------------------------
 # Pridobivanje seznama slovarjev z vsemi podatki
 # --------------------------------------------------
+
+# TODO KOMENTAR O PRIDOBITVI PODATKOV. Čeprav večino podatkov pridobimo že z..
 
 # Subsidiary to file_to_dict_list()
 def file_to_content(directory, filename):
@@ -190,12 +198,6 @@ def block_to_unified_dict(block):
     return main_dict
 
 
-# Test za en blok:
-# drew_block = content_to_blocks(file_to_content(data_path, name_html_333))[8]
-# [5449] --> Matej
-# print(block_to_unified_dict(drew_block))
-
-
 def file_to_dict_list(directory, filename):
     '''Prebere datoteko ter vrne seznam slovarjev, za vsak rank svoj slovar'''
     content = file_to_content(directory, filename)
@@ -209,7 +211,7 @@ def file_to_dict_list(directory, filename):
     for i, block in enumerate(blocks):
         sez.append(block_to_unified_dict(block))
         if not i % 100 and i:
-            print(f'{i / 100} percent')
+            print(f'Zajetih {i} tekmovalcev')
         if not i % 500:
             print('Time:', datetime.datetime.now())
     return sez
@@ -260,21 +262,34 @@ def json_to_csv(dir_json, filename_json, dir_csv, filename_csv):
 # Glavna funkcija
 # --------------------------------------------------
 
-def main(redownload=False, reparse=False):
-    '''Pridobi ter z vmesnimi koraki zapiše željene podatke v csv datoteko'''
-    if redownload:
+def main(
+    redownload_333=False, reparse_333=False,
+    redownload_multi=False, reparse_multi=False):
+    '''Pridobi ter z vmesnimi koraki zapiše željene podatke v csv datoteke'''
+    if redownload_333: # download_main_data_333
         # Na disk shrani html z 333 ranki
         # Stran zajeta dne: 2020-10-28
         url_to_disk(url_333, data_path, name_html_333)
-    
-    if reparse:
+
+    if reparse_333: # download_additional_data_and_reparse_333
         # Pridobi podatke iz html datoteke in dodatne podatke s spleta
-        # Dodatnih html datotek ne shrani na disk, in teče zelo dolgo
+        # Dodatnih html datotek ne shrani na disk (izvaja se dolgo)
         # Podatke zapiše v json in v csv datoteko
         dicts = file_to_dict_list(data_path, name_html_333)
         obj_to_json(dicts, data_path, name_json_333)
         json_to_csv(data_path, name_json_333, data_path, name_csv_333)
 
+    if redownload_multi: # download_main_data_multi
+        # Na disk shrani html z multi ranki
+        # Stran zajeta dne: 2020-10-31
+        url_to_disk(url_multi, data_path, name_html_multi)
+
+    if reparse_multi: # download_additional_data_and_reparse_multi
+        # Pridobi podatke iz html datoteke in dodatne podatke s spleta
+        # Dodatnih html datotek ne shrani na disk (izvaja se dolgo)
+        # Podatke zapiše v json in v csv datoteko
+        # TODO
+        pass
 
 # Da se main() ne požene ob, denimo, importu
 if __name__ == '__main__':
