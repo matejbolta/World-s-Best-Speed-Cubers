@@ -1,19 +1,19 @@
 # Script structure:
-# main(...)
-#     url_to_disk(...) ok
-#         url_to_content(...) ok
-#         content_to_disk(...) ok
-#     file_to_dict_list(...) ok
-#         file_to_content(...) ok
-#         content_to_blocks(...) ok
-#         block_to_unified_dict(...)
-#             block_to_main_dict(...)
-#             block_to_competitor_dict(...)
-#             block_to_competition_dict(...)
-#     obj_to_json(...)
-#     json_to_csv(...)
-#         json_to_obj(...)
-#         dicts_to_csv(...)
+# main()
+#     url_to_disk()
+#         url_to_content()
+#         content_to_disk()
+#     file_to_dict_list()
+#         file_to_content()
+#         content_to_blocks()
+#         block_to_unified_dict_333/multi()
+#             block_to_main_dict_333/multi()
+#             block_to_competitor_dict_333/multi()
+#             block_to_competition_dict()
+#     obj_to_json()
+#     json_to_csv()
+#         json_to_obj()
+#         dicts_to_csv()
 
 import csv
 import datetime
@@ -121,8 +121,8 @@ def content_to_blocks(content):
     return list_of_blocks
 
 
-# Subsidiary to block_to_unified_dict()
-def block_to_main_dict(block):
+# Subsidiary to block_to_unified_dict_333()
+def block_to_main_dict_333(block):
     '''Vrne slovar ki vsebuje (skoraj) vse željene podatke'''
     pattern = re.compile(
         r'<td class="pos .*?"> '
@@ -144,8 +144,33 @@ def block_to_main_dict(block):
     return main_dict
 
 
-# Subsidiary to block_to_unified_dict()
-def block_to_competitor_dict(block):
+# ------------------------------
+# Subsidiary to block_to_unified_dict_multi()
+def block_to_main_dict_multi(block):
+    '''Vrne slovar ki vsebuje (skoraj) vse željene podatke'''
+    pattern = re.compile(
+        r'<td class="pos .*?"> '
+        r'(?P<rank>\d+?)'
+        r' </td>.*?<a href=".*?">'
+        r'(?P<name>.+?)'
+        r'</a> </td>.*?"result"> '
+        r'(?P<result>.+?)'
+        r' </td>.*?</span> '
+        r'(?P<citizen_of>.+?)'
+        r' </td>.*?<a href=".*?">'
+        r'(?P<competition>.+?(?P<year>\d{4}))' # Grupa v grupi
+        r'</a> </td>.*?-->',
+        re.DOTALL
+    )
+    data = re.search(pattern, block)
+    main_dict = data.groupdict()
+    # print(block, '\n\n', main_dict)
+    return main_dict
+# ------------------------------
+
+
+# Subsidiary to block_to_unified_dict_333()
+def block_to_competitor_dict_333(block):
     '''Pridobi spletno stran tekmovalca (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovalcu'''
     # Htmljev ne shranjuje na disk, ker bi jih bilo skupno 2 * 10'000
@@ -167,7 +192,32 @@ def block_to_competitor_dict(block):
     return re.search(pattern_comp, content).groupdict()
 
 
-# Subsidiary to block_to_unified_dict()
+# ------------------------------
+# Subsidiary to block_to_unified_dict_multi()
+def block_to_competitor_dict_multi(block):
+    '''Pridobi spletno stran tekmovalca (je ne shrani),
+    ter vrne slovar z dodatnimi podatki o tekmovalcu'''
+    # Htmljev ne shranjuje na disk, ker bi jih bilo skupno 2 * 2'000
+    pattern_url = re.compile(
+        r'<a href="/(?P<url>persons/.*?)">'
+    )
+    addition = re.search(pattern_url, block).group('url')
+    content = url_to_content(url_wca + addition)
+    pattern_comp = re.compile(
+        r'WCA ID.*?</td>.*?<td>'
+        r'(?P<wca_id>.*?)'
+        r'</td>.*?<td>'
+        r'(?P<gender>.*?)'
+        r'</td>.*?<td>'
+        r'(?P<attended_competitions>.*?)'
+        r'</td>',
+        flags=re.DOTALL
+    )
+    return re.search(pattern_comp, content).groupdict()
+# ------------------------------
+
+
+# Subsidiary to block_to_unified_dict_333/multi()
 def block_to_competition_dict(block):
     '''Pridobi spletno stran tekmovanja (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovanju'''
@@ -186,10 +236,23 @@ def block_to_competition_dict(block):
 
 
 # Subsidiary to file_to_dict_list()
-def block_to_unified_dict(block):
+def block_to_unified_dict_333(block):
     '''Vrne skupen slovar vseh podatkov iz bloka'''
-    main_dict = block_to_main_dict(block)
-    competitor_dict = block_to_competitor_dict(block)
+    main_dict = block_to_main_dict_333(block)
+    competitor_dict = block_to_competitor_dict_333(block)
+    competition_dict = block_to_competition_dict(block)
+
+    main_dict.update(competitor_dict)
+    main_dict.update(competition_dict)
+
+    return main_dict
+
+
+# Subsidiary to file_to_dict_list()
+def block_to_unified_dict_multi(block):
+    '''Vrne skupen slovar vseh podatkov iz bloka'''
+    main_dict = block_to_main_dict_multi(block)
+    competitor_dict = block_to_competitor_dict_multi(block)
     competition_dict = block_to_competition_dict(block)
 
     main_dict.update(competitor_dict)
@@ -202,14 +265,22 @@ def file_to_dict_list(directory, filename):
     '''Prebere datoteko ter vrne seznam slovarjev, za vsak rank svoj slovar'''
     content = file_to_content(directory, filename)
     blocks = content_to_blocks(content)
-    # return [
-    #     block_to_unified_dict(block) for block in blocks
-    # ]
+    # if filename == name_html_333:
+    #     return [
+    #         block_to_unified_dict_333(block) for block in blocks
+    #     ]
+    # elif filename == name_html_multi:
+    #     return [
+    #         block_to_unified_dict_multi(block) for block in blocks
+    #     ]
 
     # Tole naredi enako, plus, vmes kaže napredek:
     sez = list()
     for i, block in enumerate(blocks):
-        sez.append(block_to_unified_dict(block))
+        if filename == name_html_333:
+            sez.append(block_to_unified_dict_333(block))
+        elif filename == name_html_multi:
+            sez.append(block_to_unified_dict_multi(block))
         if not i % 100 and i:
             print(f'Zajetih {i} tekmovalcev')
         if not i % 500:
