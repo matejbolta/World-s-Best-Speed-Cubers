@@ -1,49 +1,23 @@
 # POBIRAM:
-#
-# wca ranki:
-# - rank
-# - ime
-# - rezultat
-# - narodnost
-# - tekmovanje
-# - leto
-#
-# tekmovalec:
-# - spol
-# - št tekmovanj
-# - id (leto registracije)
-#
-# tekmovanje:
-# - število tekmovalcev
-# ---------------------------------------------
-#
-# multi::
-# wca ranki:
-# - isto
-#
-# tekmovalec:
-# - 3x3x3 avg + rank wr
-# - spol, id, št tekmovanj
-
-# vaje:
-# main
-#     save frontpage
-#         download url to string
-#         save string to file
-#     ads from file
-#         read file to string
-#         page to ads
-#         get dict from ad block
-#     write ads to csv
-#         write csv
-#-------------------------------------------------
+#   Mutliple Blindfolded (multi):
+#     Wca ranki:
+#       - rank
+#       - ime
+#       - rezultat
+#       - narodnost
+#       - tekmovanje
+#       - leto
+#     Tekmovalec:
+#       - 3x3x3 avg + rank wr
+#       - spol, id, št tekmovanj
 
 import csv
-# import datetime
+import datetime
 import json
 import os
 import re
 import requests
+import time
 
 
 # Konstante
@@ -62,20 +36,36 @@ name_csv_333 = '333.csv'
 # Shranjevanje html datoteke na disk
 # --------------------------------------------------
 
-# Subsidiary to url_to_disk()
+# Subsidiary to url_to_disk() and others
 def url_to_content(url):
     '''Sprejme url (niz), ter vrne vsebino pod tem url-jem kot niz'''
-    try:
-        page_content = requests.get(url) # Spletna stran object
-    except requests.exceptions.ConnectionError:
-        print(f'Napaka pri povezovanju do:\n{url}')
-        return None
+    # Filter za nestabilno internetno povezavo
+    # (I've learned it the hard way)
+    while True:
+        try:
+            page_content = requests.get(url) # Spletna stran object
+            break
+        except requests.exceptions.ConnectionError:
+            print(
+                f'Napaka pri povezovanju do:\n'
+                f'{url}\n'
+                f'Ponovni poskus čez deset sekund.'
+            )
+            time.sleep(10)
 
     if page_content.status_code == requests.codes.ok:
         return page_content.text
+
+    # Filter za zavrnitev poizvedbe (zaradi preveč poizvedb)
     else:
-        print(f'Napaka pri prenosu strani:\n{url}')
-        return None
+        print(
+            f'Napaka pri prenosu strani:\n'
+            f'{url}\n'
+            f'Ponovitev izvajanja čez dve minuti.'
+
+        )
+        time.sleep(120)
+        return url_to_content(url)
 
 
 # Subsidiary to url_to_disk()
@@ -190,15 +180,14 @@ def block_to_competition_dict(block):
 # Subsidiary to file_to_dict_list()
 def block_to_unified_dict(block):
     '''Vrne skupen slovar vseh podatkov iz bloka'''
-    return block_to_main_dict(block)
-    # main_dict = block_to_main_dict(block)
-    # competitor_dict = block_to_competitor_dict(block)
-    # competition_dict = block_to_competition_dict(block)
+    main_dict = block_to_main_dict(block)
+    competitor_dict = block_to_competitor_dict(block)
+    competition_dict = block_to_competition_dict(block)
 
-    # main_dict.update(competitor_dict)
-    # main_dict.update(competition_dict)
+    main_dict.update(competitor_dict)
+    main_dict.update(competition_dict)
 
-    # return main_dict
+    return main_dict
 
 
 # Test za en blok:
@@ -211,22 +200,19 @@ def file_to_dict_list(directory, filename):
     '''Prebere datoteko ter vrne seznam slovarjev, za vsak rank svoj slovar'''
     content = file_to_content(directory, filename)
     blocks = content_to_blocks(content)
-
-    # To naj bi teklo med 8 (3s na blok) in 11 (4s na blok) ur,
-    # če me wca vmes ne bana. Vmes bi bilo opravljenih 20 000
-    # requests.get() poizvedb, ena na 1,5 oz 2 sekundi.
+    # return [
+    #     block_to_unified_dict(block) for block in blocks
+    # ]
 
     # Tole naredi enako, plus, vmes kaže napredek:
-    # sez = list()
-    # print('Začetek:', datetime.datetime.now())
-    # for i, block in enumerate(blocks):
-    #     sez.append(block_to_unified_dict(block))
-    #     if not i % 10:
-    #         print(f'napredek: {(i + 1) / 100}%')
-    # return sez
-    return [
-        block_to_unified_dict(block) for block in blocks
-    ]
+    sez = list()
+    for i, block in enumerate(blocks):
+        sez.append(block_to_unified_dict(block))
+        if not i % 100 and i:
+            print(f'{i / 100} percent')
+        if not i % 500:
+            print('Time:', datetime.datetime.now())
+    return sez
 
 
 # --------------------------------------------------
