@@ -215,29 +215,42 @@ def block_to_competitor_dict_multi(block):
     )
     addition = re.search(pattern_url, block).group('url')
     content = url_to_content(url_wca + addition)
-    pattern_comp = re.compile(
+    pattern = re.compile(
         r'WCA ID.*?</td>.*?<td>'
         r'(?P<wca_id>.*?)'
         r'</td>.*?<td>'
         r'(?P<gender>.*?)'
         r'</td>.*?<td>'
         r'(?P<attended_competitions>.*?)'
-        r'</td>.*?' # skipping cca 50 rows
-        r'<td class="average">.*?<a class="plain" '
-        r'href="/results/rankings/333/average">\n\s*'
-        r'(?P<three_average>.*?)'
-        r'\n.*?</a>.*?"world-rank ">'
-        r'(?P<three_world_rank>.*?)'
-        r'</td>',
+        r'</td>.',
         flags=re.DOTALL
     )
-    # Dodatek, ker je lahko ime grupe samo \w character
-    c_dict = re.search(pattern_comp, content).groupdict()
-    c_dict['333_average'] = c_dict['three_average']
-    c_dict['333_world_rank'] = c_dict['three_world_rank']
-    del c_dict['three_average']
-    del c_dict['three_world_rank']
-    return c_dict
+
+    dict_0 = re.search(pattern, content).groupdict()
+
+    # Samo tekmovalci, ki so tekmovali v disciplini 333
+    if re.search(re.compile('3x3x3 Cube'), content):
+        pattern_333 = re.compile(
+            r'<td class="average">.*?<a class="plain" '
+            r'href="/results/rankings/333/average">\n\s*'
+            r'(?P<three_average>.*?)'
+            r'\n.*?</a>.*?"world-rank ">'
+            r'(?P<three_world_rank>.*?)'
+            r'</td>',
+            flags=re.DOTALL
+        )
+        dict_1 = re.search(pattern_333, content).groupdict()
+        # Dodatek, ker je lahko ime grupe samo \w character
+        dict_1['333_average'] = dict_1['three_average']
+        dict_1['333_world_rank'] = dict_1['three_world_rank']
+        del dict_1['three_average']
+        del dict_1['three_world_rank']
+        dict_0.update(dict_1)
+    else:
+        dict_0['333_average'] = 'N/A'
+        dict_0['333_world_rank'] = 'N/A'
+
+    return dict_0
 
 
 # Subsidiary to block_to_unified_dict_333/multi()
@@ -305,10 +318,10 @@ def file_to_dict_list(directory, filename):
             sez.append(block_to_unified_dict_333(block))
         elif filename == name_html_multi:
             sez.append(block_to_unified_dict_multi(block))
-        if not i % 100 and i:
-            print(f'Zajetih {i} tekmovalcev')
         if not i % 500:
             print('Time:', datetime.datetime.now())
+        if not i % 100 and i:
+            print(f'Zajetih {i} tekmovalcev')
     return sez
 
 
