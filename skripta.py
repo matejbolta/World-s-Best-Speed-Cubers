@@ -98,7 +98,11 @@ def url_to_disk(url, directory, filename):
 # Pridobivanje seznama slovarjev z vsemi podatki
 # --------------------------------------------------
 
-# TODO KOMENTAR O PRIDOBITVI PODATKOV. Čeprav večino podatkov pridobimo že z..
+# Čeprav večino podatkov pridobimo že z začetne html strani, ki je lokalno
+# shranjena na disku, te za zanimivo analizo niso zadostni. Zato za vsak
+# rezultat obiščemo še dve strani (tekmovalčevo osebno, ter od tekmovanja).
+# Teh strani pa na disk ne shranjujemo zaradi obsega (vse skupaj jih je
+# namreč 2 * 2000 + 2 * 10000 = 24000).
 
 # Subsidiary to file_to_dict_list()
 def file_to_content(directory, filename):
@@ -140,11 +144,9 @@ def block_to_main_dict_333(block):
     )
     data = re.search(pattern, block)
     main_dict = data.groupdict()
-    # print(block, '\n\n', main_dict)
     return main_dict
 
 
-# ------------------------------
 # Subsidiary to block_to_unified_dict_multi()
 def block_to_main_dict_multi(block):
     '''Vrne slovar ki vsebuje (skoraj) vse željene podatke'''
@@ -154,7 +156,7 @@ def block_to_main_dict_multi(block):
         r' </td>.*?<a href=".*?">'
         r'(?P<name>.+?)'
         r'</a> </td>.*?"result"> '
-        r'(?P<result>.+?)'
+        r'(?P<result>.+?)' #----------
         r' </td>.*?</span> '
         r'(?P<citizen_of>.+?)'
         r' </td>.*?<a href=".*?">'
@@ -164,9 +166,20 @@ def block_to_main_dict_multi(block):
     )
     data = re.search(pattern, block)
     main_dict = data.groupdict()
-    # print(block, '\n\n', main_dict)
+    result = main_dict['result']
+
+    solved = result[:result.index('/')]
+    attempted = result[result.index('/') + 1:result.index(' ')]
+    unsolved = str(int(attempted) - int(solved))
+    points = str(int(solved) - int(unsolved))
+    
+    time = result[result.index(' ') + 1:]
+
+    main_dict['result'] = solved + '/' + attempted
+    main_dict['result_points'] = points
+    main_dict['result_time'] = time
+
     return main_dict
-# ------------------------------
 
 
 # Subsidiary to block_to_unified_dict_333()
@@ -192,7 +205,6 @@ def block_to_competitor_dict_333(block):
     return re.search(pattern_comp, content).groupdict()
 
 
-# ------------------------------
 # Subsidiary to block_to_unified_dict_multi()
 def block_to_competitor_dict_multi(block):
     '''Pridobi spletno stran tekmovalca (je ne shrani),
@@ -210,18 +222,25 @@ def block_to_competitor_dict_multi(block):
         r'(?P<gender>.*?)'
         r'</td>.*?<td>'
         r'(?P<attended_competitions>.*?)'
+        r'</td>.*?'
+        r'<td class="average">.*?<a class="plain" '
+        r'href="/results/rankings/333/average">'
+        r'3x3x3 Cube.*?"world-rank ">\n\s*'
+        r'(?P<333_average>.*?)'
+        r'.*?"world-rank ">'
+        r'(?P<333_world_rank>.*?)'
         r'</td>',
         flags=re.DOTALL
     )
     return re.search(pattern_comp, content).groupdict()
-# ------------------------------
 
 
 # Subsidiary to block_to_unified_dict_333/multi()
 def block_to_competition_dict(block):
     '''Pridobi spletno stran tekmovanja (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovanju'''
-    # Htmljev ne shranjuje na disk, ker bi jih bilo skupno 2 * 10'000
+    # Htmljev ne shranjuje na disk, ker bi jih bilo
+    # skupno 2 * 10000 oziroma 2 * 2000
     pattern_url = re.compile(
         r'<a href="/(?P<url>competitions/.*?)">'
     )
@@ -335,7 +354,8 @@ def json_to_csv(dir_json, filename_json, dir_csv, filename_csv):
 
 def main(
     redownload_333=False, reparse_333=False,
-    redownload_multi=False, reparse_multi=False):
+    redownload_multi=False, reparse_multi=False
+    ):
     '''Pridobi ter z vmesnimi koraki zapiše željene podatke v csv datoteke'''
     if redownload_333: # download_main_data_333
         # Na disk shrani html z 333 ranki
@@ -359,8 +379,10 @@ def main(
         # Pridobi podatke iz html datoteke in dodatne podatke s spleta
         # Dodatnih html datotek ne shrani na disk (izvaja se dolgo)
         # Podatke zapiše v json in v csv datoteko
-        # TODO
-        pass
+        dicts = file_to_dict_list(data_path, name_html_multi)
+        obj_to_json(dicts, data_path, name_json_multi)
+        json_to_csv(data_path, name_json_multi, data_path, name_csv_multi)
+        
 
 # Da se main() ne požene ob, denimo, importu
 if __name__ == '__main__':
