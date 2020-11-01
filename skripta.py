@@ -226,13 +226,19 @@ def block_to_competitor_dict_multi(block):
         r'<td class="average">.*?<a class="plain" '
         r'href="/results/rankings/333/average">'
         r'3x3x3 Cube.*?"world-rank ">\n\s*'
-        r'(?P<333_average>.*?)'
+        r'(?P<three_average>.*?)'
         r'.*?"world-rank ">'
-        r'(?P<333_world_rank>.*?)'
+        r'(?P<three_world_rank>.*?)'
         r'</td>',
         flags=re.DOTALL
     )
-    return re.search(pattern_comp, content).groupdict()
+    # Dodatek, ker je lahko ime grupe samo \w character
+    c_dict = re.search(pattern_comp, content).groupdict()
+    c_dict['333_average'] = c_dict['three_average']
+    c_dict['333_world_rank'] = c_dict['three_world_rank']
+    del c_dict['three_average']
+    del c_dict['three_world_rank']
+    return c_dict
 
 
 # Subsidiary to block_to_unified_dict_333/multi()
