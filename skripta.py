@@ -222,12 +222,11 @@ def block_to_competitor_dict_multi(block):
         r'(?P<gender>.*?)'
         r'</td>.*?<td>'
         r'(?P<attended_competitions>.*?)'
-        r'</td>.*?'
+        r'</td>.*?' # skipping cca 50 rows
         r'<td class="average">.*?<a class="plain" '
-        r'href="/results/rankings/333/average">'
-        r'3x3x3 Cube.*?"world-rank ">\n\s*'
+        r'href="/results/rankings/333/average">\n\s*'
         r'(?P<three_average>.*?)'
-        r'.*?"world-rank ">'
+        r'\n.*?</a>.*?"world-rank ">'
         r'(?P<three_world_rank>.*?)'
         r'</td>',
         flags=re.DOTALL
