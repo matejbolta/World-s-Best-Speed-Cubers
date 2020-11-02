@@ -43,6 +43,9 @@ url_multi = url_wca + f'results/rankings/333mbf/single?show={2000}+persons'
 # --------------------------------------------------
 
 # Subsidiary to url_to_disk()
+# Funkcija vpošteva nestabilno internetno povezavo, poleg tega pa tudi
+# zavrnitev na strežniku s pomočjo rekurzije. Ker se skripta lahko izvaja
+# več ur.
 def url_to_content(url):
     '''Sprejme url (niz), ter vrne vsebino pod tem url-jem kot niz'''
     # Filter za nestabilno internetno povezavo
@@ -166,6 +169,9 @@ def block_to_main_dict_multi(block):
     )
     data = re.search(pattern, block)
     main_dict = data.groupdict()
+
+    # Ta del je zaradi nepraktičnega zapisa rezultata pri multiju,
+    # ki je oblike 'solved/attempted time'
     result = main_dict['result']
 
     solved = result[:result.index('/')]
@@ -183,6 +189,7 @@ def block_to_main_dict_multi(block):
 
 
 # Subsidiary to block_to_unified_dict_333()
+# Iz bloka dobi URL, ki ga nato obišče
 def block_to_competitor_dict_333(block):
     '''Pridobi spletno stran tekmovalca (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovalcu'''
@@ -206,6 +213,7 @@ def block_to_competitor_dict_333(block):
 
 
 # Subsidiary to block_to_unified_dict_multi()
+# Iz bloka dobi URL, ki ga nato obišče
 def block_to_competitor_dict_multi(block):
     '''Pridobi spletno stran tekmovalca (je ne shrani),
     ter vrne slovar z dodatnimi podatki o tekmovalcu'''
@@ -229,6 +237,7 @@ def block_to_competitor_dict_multi(block):
     dict_0 = re.search(pattern, content).groupdict()
 
     # Samo tekmovalci, ki so tekmovali v disciplini 333
+    # To namreč niso vsi, približno 1% jih tu izpade
     if re.search(re.compile('3x3x3 Cube'), content):
         pattern_333 = re.compile(
             r'<td class="average">.*?<a class="plain" '
@@ -321,7 +330,7 @@ def file_to_dict_list(directory, filename):
         if not i % 500:
             print('Time:', datetime.datetime.now())
         if not i % 100 and i:
-            print(f'Zajetih {i} tekmovalcev')
+            print(f'Zajetih {i} + 1 tekmovalcev')
     return sez
 
 
