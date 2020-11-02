@@ -27,6 +27,7 @@ import time
 
 # Konstante
 data_path = 'data/'
+html_path = 'html-files/'
 name_html_333 = '333.html'
 name_json_333 = '333.json'
 name_csv_333 = '333.csv'
@@ -387,26 +388,26 @@ def main(
     if redownload_333: # download_main_data_333
         # Na disk shrani html z 333 ranki
         # Stran zajeta dne: 2020-10-28
-        url_to_disk(url_333, data_path, name_html_333)
+        url_to_disk(url_333, html_path, name_html_333)
 
     if reparse_333: # download_additional_data_and_reparse_333
         # Pridobi podatke iz html datoteke in dodatne podatke s spleta
         # Dodatnih html datotek ne shrani na disk (izvaja se dolgo)
         # Podatke zapiše v json in v csv datoteko
-        dicts = file_to_dict_list(data_path, name_html_333)
+        dicts = file_to_dict_list(html_path, name_html_333)
         obj_to_json(dicts, data_path, name_json_333)
         json_to_csv(data_path, name_json_333, data_path, name_csv_333)
 
     if redownload_multi: # download_main_data_multi
         # Na disk shrani html z multi ranki
         # Stran zajeta dne: 2020-10-31
-        url_to_disk(url_multi, data_path, name_html_multi)
+        url_to_disk(url_multi, html_path, name_html_multi)
 
     if reparse_multi: # download_additional_data_and_reparse_multi
         # Pridobi podatke iz html datoteke in dodatne podatke s spleta
         # Dodatnih html datotek ne shrani na disk (izvaja se dolgo)
         # Podatke zapiše v json in v csv datoteko
-        dicts = file_to_dict_list(data_path, name_html_multi)
+        dicts = file_to_dict_list(html_path, name_html_multi)
         obj_to_json(dicts, data_path, name_json_multi)
         json_to_csv(data_path, name_json_multi, data_path, name_csv_multi)
         
