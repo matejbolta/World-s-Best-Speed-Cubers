@@ -1,5 +1,5 @@
 # Elite Speedsolvers Analysis
-##### Projektna naloga pri predmetu Programiranje 1 na Fakulteti za matematiko in fiziko. Vključuje zajem podatkov in njigovo analizo.
+##### Projektna naloga pri predmetu Programiranje 1 na Fakulteti za matematiko in fiziko. Vključuje zajem podatkov in njihovo analizo.
 
 ***
 
